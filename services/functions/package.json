@@ -1,0 +1,16 @@
+{
+  "name": "@aws-template/functions",
+  "version": "1.0.0",
+  "license": "UNLICENSED",
+  "scripts": {
+    "clean": "rimraf node_modules .serverless",
+    "deploy": "serverless deploy",
+    "remove": "serverless remove"
+  },
+  "dependencies": {
+    "@aws-template/common": "1.0.0"
+    },
+  "devDependencies": {
+    "@aws-template/config": "1.0.0"
+  }
+}

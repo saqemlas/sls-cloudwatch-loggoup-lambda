@@ -1,0 +1,19 @@
+{
+  "name": "@aws-template/cloudwatch-loggroup-lambda",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "clean": "lerna run clean --stream --parallel -- && rimraf node_modules && yarn cache clean",
+    "test": "lerna run test --stream --parallel --",
+    "deploy": "lerna run deploy --stream --",
+    "remove": "lerna ls --toposort | tac | xargs -I % lerna run --stream --no-bail --scope % remove --"
+  },
+  "devDependencies": {
+    "lerna": "4.0.0",
+    "rimraf": "3.0.2"
+  }
+}

@@ -1,0 +1,186 @@
+service: common
+
+variablesResolutionMode: 20210326
+
+projectDir: ..
+
+plugins:
+  - serverless-esbuild
+  - serverless-s3-cleaner
+  - serverless-iam-roles-per-function
+
+package:
+  individually: true
+
+custom:
+  project: ${file(../config.yml):project}
+  baseName: ${self:custom.project}-${self:service}-${self:provider.stage}
+
+  esbuild:
+    packager: yarn
+    platform: node
+    target: node14
+    bundle: true
+    minify: true
+    sourcemap: true
+
+  serverless-iam-roles-per-function:
+    defaultInherit: true
+
+  serverless-s3-cleaner:
+    buckets:
+      - CloudtrailLogBucketName
+      - ${cf:${self:custom.baseName}.ServerlessDeploymentBucketName, ''}
+
+  scriptable:
+    hooks:
+      before:remove:remove:
+        - yarn run remove:bucket CloudtrailLogBucketName
+
+provider:
+  name: aws
+  region: ${opt:region, 'eu-west-1'}
+  stage: ${opt:stage, 'dev'}
+  stackName: ${self:custom.baseName}
+  deploymentBucket:
+    blockPublicAccess: true
+  runtime: nodejs14.x
+  memorySize: 128
+  timeout: 30
+  logRetentionInDays: 30
+  versionFunctions: false
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    NODE_OPTIONS: "--enable-source-maps"
+    ENVIRONMENT: ${self:provider.stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource:
+            - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*:log-stream:*
+        - Effect: Allow
+          Action:
+            - logs:PutMetricFilter
+            - logs:PutSubscriptionFilter
+          Resource: 
+            - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*
+        - Effect: Allow
+          Action:
+            - iam:PassRole
+          Resource: 
+            - !Sub arn:aws:iam::${AWS::AccountId}:role/${self:custom.baseName}-log-stream-role
+
+
+functions:
+  dynamicSubscriber:
+    name: ${self:custom.baseName}-log-subscriber
+    handler: src/index.handler
+    description: Dynamically configures Metric Filter for Log Groups
+    environment:
+      KINESIS_ARN: !GetAtt LogGroupKinesisStream.Arn
+      KINESIS_ROLE_ARN: !GetAtt LogGroupKinesisStreamRole.Arn
+      FUNCTION_NAME: ${self:custom.baseName}-log-subscriber
+    events:
+      - cloudwatchEvent:
+          event:
+            source:
+              - aws.logs
+            detail-type:
+              - AWS API Call via CloudTrail
+            detail:
+              eventSource:
+                - logs.amazonaws.com
+              eventName:
+                - CreateLogGroup
+
+
+resources:
+  Resources:
+
+    LogGroupKinesisStream:
+      Type: AWS::Kinesis::Stream
+      Properties:
+        Name: ${self:custom.baseName}-log-stream
+        ShardCount: 1
+
+    LogGroupKinesisStreamRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ${self:custom.baseName}-log-stream-role
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - logs.amazonaws.com
+              Action:
+                - sts:AssumeRole
+        Policies:
+          - PolicyName: ${self:custom.baseName}-log-stream-policy
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - kinesis:PutRecords
+                    - kinesis:PutRecord
+                  Resource:
+                    - !GetAtt LogGroupKinesisStream.Arn
+
+    CloudtrailLogBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: Private
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
+    
+    CloudtrailLogBucketAccessPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref CloudtrailLogBucket
+        PolicyDocument:
+          Statement:
+            - Effect: Allow
+              Action: s3:GetBucketAcl
+              Principal:
+                Service: cloudtrail.amazonaws.com
+              Resource:
+                - !Sub arn:aws:s3:::${CloudtrailLogBucket}
+            - Effect: Allow
+              Action: s3:PutObject
+              Principal:
+                Service: cloudtrail.amazonaws.com
+              Condition:
+                StringEquals:
+                  "s3:x-amz-acl": "bucket-owner-full-control"
+              Resource:
+                - !Sub arn:aws:s3:::${CloudtrailLogBucket}/*
+
+    LogGroupTrail:
+      DependsOn: CloudtrailLogBucketAccessPolicy
+      Type: AWS::CloudTrail::Trail
+      Properties:
+        TrailName: ${self:custom.baseName}-trail
+        EnableLogFileValidation: true
+        IsLogging: true
+        IsMultiRegionTrail: false
+        S3BucketName: !Ref CloudtrailLogBucket
+        EventSelectors: 
+          - IncludeManagementEvents: true
+            ReadWriteType: WriteOnly
+        # SnsTopicName: String
+
+
+  Outputs:
+  
+    CloudtrailLogBucketName:
+      Value: !Ref CloudtrailLogBucket

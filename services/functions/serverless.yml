@@ -1,0 +1,82 @@
+service: functions
+
+variablesResolutionMode: 20210326
+
+projectDir: ..
+
+plugins:
+  - serverless-esbuild
+  - serverless-iam-roles-per-function
+
+package:
+  individually: true
+
+custom:
+  project: ${file(../config.yml):project}
+  baseName: ${self:custom.project}-${self:service}-${self:provider.stage}
+
+  esbuild:
+    packager: yarn
+    platform: node
+    target: node14
+    bundle: true
+    minify: true
+    sourcemap: true
+
+  serverless-iam-roles-per-function:
+    defaultInherit: true
+
+provider:
+  name: aws
+  region: ${opt:region, 'eu-west-1'}
+  stage: ${opt:stage, 'dev'}
+  stackName: ${self:custom.baseName}
+  deploymentBucket:
+    # deploys to common serverless deployment bucket
+    name: ${cf:${self:custom.project}-common-${self:provider.stage}.ServerlessDeploymentBucketName}
+  httpApi:
+    cors:
+      allowedOrigins: 
+        - '*'
+      allowedMethods:
+        - GET
+      allowedHeaders:
+        - Content-Type
+  logs:
+    httpApi: true
+  runtime: nodejs14.x
+  memorySize: 128
+  timeout: 29
+  logRetentionInDays: 7
+  versionFunctions: false
+  environment:
+    AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+    NODE_OPTIONS: "--enable-source-maps"
+    ENVIRONMENT: ${self:provider.stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource:
+            - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/*:log-stream:*
+
+
+functions:
+  example:
+    name: ${self:custom.baseName}-example
+    handler: src/index.handler
+    events:
+      - httpApi:
+          path: /example
+          method: GET
+  # example2:
+  #   name: ${self:custom.baseName}-example2
+  #   handler: src/index.handler
+  #   events:
+  #     - httpApi:
+  #         path: /example2
+  #         method: GET

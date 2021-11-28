@@ -1,0 +1,4 @@
+project: template
+
+contacts:
+  alarms: example@slack.com

@@ -1,0 +1,21 @@
+{
+    "name": "@aws-template/config",
+    "version": "1.0.0",
+    "license": "UNLICENSED",
+    "scripts": {
+      "clean": "rimraf node_modules"
+    },
+    "dependencies": {},
+    "devDependencies": {
+      "@types/aws-lambda": "8.10.85",
+      "@types/node": "16.11.10",
+      "inquirer": "8.2.0",
+      "serverless": "2.67.0",
+      "serverless-esbuild": "1.22.0",
+      "serverless-s3-cleaner": "1.0.1",
+      "serverless-iam-roles-per-function": "3.2.0",
+      "serverless-scriptable-plugin": "1.2.2",
+      "rimraf": "3.0.2",
+      "uuid":"8.3.2"
+    }
+}

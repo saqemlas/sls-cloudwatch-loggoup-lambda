@@ -1,0 +1,51 @@
+{
+    "account": "accountId",
+    "detail": {
+        "apiVersion": "20140328",
+        "awsRegion": "eu-west-1",
+        "eventCategory": "Management",
+        "eventID": "754b6415-866b-44a7-b5c7-d942679e29c4",
+        "eventName": "CreateLogGroup",
+        "eventSource": "logs.amazonaws.com",
+        "eventTime": "2021-11-27T20:28:25Z",
+        "eventType": "AwsApiCall",
+        "eventVersion": "1.08",
+        "managementEvent": true,
+        "readOnly": false,
+        "recipientAccountId": "accountId",
+        "requestID": "fa8b5dd6-7274-4b38-ab9b-3d151d02fc25",
+        "requestParameters": {
+            "logGroupName": "template-functions-dev-example",
+            "tags": {
+                "STAGE": "dev"
+            }
+        },
+        "responseElements": null,
+        "sourceIPAddress": "cloudformation.amazonaws.com",
+        "userAgent": "cloudformation.amazonaws.com",
+        "userIdentity": {
+            "accessKeyId": "accessKeyId",
+            "accountId": "accountId",
+            "arn": "arn:aws:iam::accountId:user/user",
+            "invokedBy": "cloudformation.amazonaws.com",
+            "principalId": "principalId",
+            "sessionContext": {
+                "attributes": {
+                    "creationDate": "2021-11-27T20:27:54Z",
+                    "mfaAuthenticated": "false"
+                },
+                "sessionIssuer": {},
+                "webIdFederationData": {}
+            },
+            "type": "IAMUser",
+            "userName": "user"
+        }
+    },
+    "detail-type": "AWS API Call via CloudTrail",
+    "id": "995f5628-85f6-7bc6-7b58-f2091f217636",
+    "region": "eu-west-1",
+    "resources": [],
+    "source": "aws.logs",
+    "time": "2021-11-27T20:28:25Z",
+    "version": "0"
+}

@@ -1,0 +1,5 @@
+node_modules/
+**/node_modules/
+.serverless
+
+.DS_Store
