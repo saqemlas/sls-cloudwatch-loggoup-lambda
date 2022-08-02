@@ -1,9 +1,5 @@
 service: functions
 
-variablesResolutionMode: 20210326
-
-projectDir: ..
-
 plugins:
   - serverless-esbuild
   - serverless-iam-roles-per-function

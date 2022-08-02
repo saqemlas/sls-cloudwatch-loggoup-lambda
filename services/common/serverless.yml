@@ -1,9 +1,5 @@
 service: common
 
-variablesResolutionMode: 20210326
-
-projectDir: ..
-
 plugins:
   - serverless-esbuild
   - serverless-s3-cleaner

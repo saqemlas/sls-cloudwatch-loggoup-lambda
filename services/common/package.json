@@ -4,8 +4,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "clean": "rimraf node_modules .serverless",
-    "deploy": "serverless deploy",
-    "remove": "serverless remove",
+    "deploy": "yarn run serverless deploy",
+    "remove": "yarn run serverless remove",
     "remove:bucket": "f() { AWS_PAGER='' && aws s3 rb --force s3://$1; }; f"
   },
   "dependencies": {
